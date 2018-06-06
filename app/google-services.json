@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "669321034854",
+    "firebase_url": "https://pingo-version-2.firebaseio.com",
+    "project_id": "pingo-version-2",
+    "storage_bucket": "pingo-version-2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:669321034854:android:97e7db720070d899",
+        "android_client_info": {
+          "package_name": "com.ezerka.pingo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "669321034854-e0354p5eeqkmfj35fr3phtg1l4lt486c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOTYN1KctK0sM4seCVg6RG_dNa2gmuK2I"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
