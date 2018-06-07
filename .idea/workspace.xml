@@ -15,6 +15,7 @@
   <component name="ChangeListManager">
     <list default="true" id="0edc0c44-e21a-4404-81e6-fd152f8f4ba1" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="$PROJECT_DIR$/app/release/Pingo.apk" afterPath="" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -120,26 +121,6 @@
           </provider>
           <provider editor-type-id="android-designer2">
             <state />
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="NewChatroomDialog.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/src/main/java/com/ezerka/pingo/app/NewChatroomDialog.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="478">
-              <caret line="58" column="9" lean-forward="false" selection-start-line="58" selection-start-column="9" selection-end-line="58" selection-end-column="9" />
-              <folding>
-                <element signature="e#2477#2633#0" expanded="true" />
-                <element signature="e#2632#2633#0" expanded="true" />
-                <element signature="e#3626#3662#0" expanded="true" />
-                <element signature="e#4204#4240#0" expanded="true" />
-                <element signature="e#4460#4496#0" expanded="true" />
-                <element signature="e#4839#4875#0" expanded="true" />
-                <element signature="e#4951#4994#0" expanded="true" />
-                <element signature="e#5436#5468#0" expanded="true" />
-                <element signature="method#makeToast#0;class#NewChatroomDialog#0" expanded="false" />
-              </folding>
-            </state>
           </provider>
         </entry>
       </file>
@@ -2715,7 +2696,14 @@
       <option name="project" value="LOCAL" />
       <updated>1528401630489</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Third Commit: You can now install the app which is in the app/Release folder">
+      <created>1528401704873</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1528401704873</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TodoView">
@@ -2846,17 +2834,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/menu/options_menu.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-      <provider editor-type-id="android-designer2">
-        <state />
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/local.properties">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="200">
@@ -3292,14 +3269,14 @@
         <state relative-caret-position="478">
           <caret line="58" column="9" lean-forward="false" selection-start-line="58" selection-start-column="9" selection-end-line="58" selection-end-column="9" />
           <folding>
-            <element signature="e#2477#2633#0" expanded="true" />
-            <element signature="e#2632#2633#0" expanded="true" />
-            <element signature="e#3626#3662#0" expanded="true" />
-            <element signature="e#4204#4240#0" expanded="true" />
-            <element signature="e#4460#4496#0" expanded="true" />
-            <element signature="e#4839#4875#0" expanded="true" />
-            <element signature="e#4951#4994#0" expanded="true" />
-            <element signature="e#5436#5468#0" expanded="true" />
+            <element signature="e#2477#2633#0" expanded="false" />
+            <element signature="e#2632#2633#0" expanded="false" />
+            <element signature="e#3626#3662#0" expanded="false" />
+            <element signature="e#4204#4240#0" expanded="false" />
+            <element signature="e#4460#4496#0" expanded="false" />
+            <element signature="e#4839#4875#0" expanded="false" />
+            <element signature="e#4951#4994#0" expanded="false" />
+            <element signature="e#5436#5468#0" expanded="false" />
             <element signature="method#makeToast#0;class#NewChatroomDialog#0" expanded="false" />
           </folding>
         </state>
@@ -3390,6 +3367,11 @@
           <caret line="93" column="30" lean-forward="false" selection-start-line="93" selection-start-column="30" selection-end-line="93" selection-end-column="30" />
           <folding />
         </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/release/Pingo.apk">
+      <provider selected="true" editor-type-id="apk-viewer">
+        <state />
       </provider>
     </entry>
   </component>
