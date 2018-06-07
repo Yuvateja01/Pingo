@@ -28,14 +28,31 @@ public class IssuesActivity extends AppCompatActivity {
     private IssuesFragment mIssuesFragment;
     private ProjectsFragment mProjectsFragment;
     private IssuesPagerAdapter mIssuesPagerAdapter;
+    private TabLayout mTabLayout;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_issues);
+
+        assignTheViews();
+        assignTheMethods();
+
+
+    }
+
+    private void assignTheViews() {
         mViewPager = findViewById(R.id.main_container);
         mProgressBar = findViewById(R.id.progress_bar);
 
+        mIssuesFragment = new IssuesFragment();
+        mProjectsFragment = new ProjectsFragment();
+
+        mTabLayout = findViewById(R.id.tab_layout);
+
+    }
+
+    private void assignTheMethods() {
         setupActionBar();
         setupViewPager();
     }
@@ -48,8 +65,6 @@ public class IssuesActivity extends AppCompatActivity {
     }
 
     private void setupViewPager() {
-        mIssuesFragment = new IssuesFragment();
-        mProjectsFragment = new ProjectsFragment();
 
         mIssuesPagerAdapter = new IssuesPagerAdapter(getSupportFragmentManager());
         mIssuesPagerAdapter.addFragment(mIssuesFragment);
@@ -57,11 +72,10 @@ public class IssuesActivity extends AppCompatActivity {
 
         mViewPager.setAdapter(mIssuesPagerAdapter);
 
-        TabLayout tabLayout = findViewById(R.id.tab_layout);
-        tabLayout.setupWithViewPager(mViewPager);
+        mTabLayout.setupWithViewPager(mViewPager);
 
-        tabLayout.getTabAt(ISSUES_FRAGMENT).setText(getString(R.string.fragment_issues));
-        tabLayout.getTabAt(PROJECTS_FRAGMENT).setText(getString(R.string.fragment_projects));
+        mTabLayout.getTabAt(ISSUES_FRAGMENT).setText(getString(R.string.fragment_issues));
+        mTabLayout.getTabAt(PROJECTS_FRAGMENT).setText(getString(R.string.fragment_projects));
     }
 
 

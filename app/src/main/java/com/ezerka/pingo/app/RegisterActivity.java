@@ -44,6 +44,15 @@ public class RegisterActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
+
+        assignViews();
+        assignLinks();
+
+        hideSoftKeyboard();
+
+    }
+
+    private void assignViews() {
         mEmail = findViewById(R.id.input_email);
         mPassword = findViewById(R.id.input_password);
         mConfirmPassword = findViewById(R.id.input_confirm_password);
@@ -51,51 +60,49 @@ public class RegisterActivity extends AppCompatActivity {
         mProgressBar = findViewById(R.id.progressBar);
 
         mAuth = FirebaseAuth.getInstance();
+    }
 
-
+    private void assignLinks() {
         mRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "onClick: attempting to register.");
-
-                //check for null valued EditText fields
-                if (!isEmpty(mEmail.getText().toString())
-                        && !isEmpty(mPassword.getText().toString())
-                        && !isEmpty(mConfirmPassword.getText().toString())) {
-
-                    //check if user has a company email address
-                    if (isValidDomain(mEmail.getText().toString())) {
-
-                        //check if passwords match
-                        if (doStringsMatch(mPassword.getText().toString(), mConfirmPassword.getText().toString())) {
-
-                            //Initiate registration task
-                            registerNewEmail(mEmail.getText().toString(), mPassword.getText().toString());
-                        } else {
-                            makeToast("Passwords Dont Match");
-                        }
-
-                    } else {
-                        makeToast("Please Register With Company Email ID");
-                    }
-
-                } else {
-                    makeToast("Fill out all the details");
-                }
+                registerTheUser();
             }
         });
 
-        hideSoftKeyboard();
-
     }
 
+    private void registerTheUser() {
+        String sEmail = mEmail.getText().toString();
+        String sPass = mPassword.getText().toString();
+        String sConPass = mConfirmPassword.getText().toString();
 
-    /**
-     * Register a new email and password to Firebase Authentication
-     *
-     * @param email
-     * @param password
-     */
+        Log.d(TAG, "onClick: attempting to register.");
+
+        //check for null valued EditText fields
+        if (isEmpty(sEmail) && isEmpty(sPass) && isEmpty(sConPass)) {
+
+            //check if user has a company email address
+            if (isValidDomain(sEmail)) {
+
+                //check if passwords match
+                if (doStringsMatch(sPass, sConPass)) {
+
+                    //Initiate registration task
+                    registerNewEmail(sEmail, sPass);
+                } else {
+                    makeToast("Passwords Dont Match");
+                }
+
+            } else {
+                makeToast("Please Register With Company Email ID");
+            }
+
+        } else {
+            makeToast("Fill out all the details");
+        }
+    }
+
     public void registerNewEmail(final String email, String password) {
 
         showDialog();
@@ -107,7 +114,7 @@ public class RegisterActivity extends AppCompatActivity {
                         Log.d(TAG, "createUserWithEmail:onComplete:" + task.isSuccessful());
 
                         if (task.isSuccessful()) {
-                            Log.d(TAG, "onComplete: AuthState: " + FirebaseAuth.getInstance().getCurrentUser().getUid());
+                            Log.d(TAG, "onComplete: AuthState: " + mAuth.getCurrentUser().getUid());
 
                             //send email verificaiton
                             sendVerificationEmail();
@@ -121,7 +128,7 @@ public class RegisterActivity extends AppCompatActivity {
                             user.setUser_id(mAuth.getCurrentUser().getUid());
                             FirebaseDatabase.getInstance().getReference()
                                     .child(getString(R.string.dbnode_users))
-                                    .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                                    .child(mAuth.getCurrentUser().getUid())
                                     .setValue(user)
                                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                                         @Override
@@ -160,7 +167,7 @@ public class RegisterActivity extends AppCompatActivity {
      * sends an email verification link to the user
      */
     private void sendVerificationEmail() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
             user.sendEmailVerification()
@@ -168,9 +175,9 @@ public class RegisterActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(RegisterActivity.this, "Sent Verification Email", Toast.LENGTH_SHORT).show();
+                                makeToast("Sent Verification Email");
                             } else {
-                                Toast.makeText(RegisterActivity.this, "Couldn't Verification Send Email", Toast.LENGTH_SHORT).show();
+                                makeToast("Couldn't Verify the Email");
                             }
                         }
                     });
@@ -178,12 +185,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * Returns True if the user's email contains '@tabian.ca'
-     *
-     * @param email
-     * @return
-     */
+
     private boolean isValidDomain(String email) {
         Log.d(TAG, "isValidDomain: verifying email has correct domain: " + email);
         String domain = email.substring(email.indexOf("@") + 1).toLowerCase();
@@ -197,30 +199,18 @@ public class RegisterActivity extends AppCompatActivity {
     private void redirectLoginScreen() {
         Log.d(TAG, "redirectLoginScreen: redirecting to login screen.");
 
-        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+        Intent intent = new Intent(mContext, LoginActivity.class);
         startActivity(intent);
         finish();
     }
 
-    /**
-     * Return true if @param 's1' matches @param 's2'
-     *
-     * @param s1
-     * @param s2
-     * @return
-     */
     private boolean doStringsMatch(String s1, String s2) {
         return s1.equals(s2);
     }
 
-    /**
-     * Return true if the @param is null
-     *
-     * @param string
-     * @return
-     */
+
     private boolean isEmpty(String string) {
-        return string.equals("");
+        return !string.equals("");
     }
 
 
@@ -240,7 +230,7 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     public void makeToast(String input) {
-        Toast.makeText(RegisterActivity.this, input, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 
     @Override

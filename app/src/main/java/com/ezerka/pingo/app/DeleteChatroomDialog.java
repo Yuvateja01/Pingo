@@ -2,6 +2,7 @@ package com.ezerka.pingo.app;
 
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
@@ -19,58 +20,76 @@ public class DeleteChatroomDialog extends DialogFragment {
 
     private static final String TAG = "DeleteChatroomDialog";
     private String mChatroomId;
+    private TextView mDelete;
+    private TextView mCancel;
 
-    //create a new bundle and set the arguments to avoid a null pointer
+    private FirebaseDatabase mData;
+
     public DeleteChatroomDialog() {
         super();
         setArguments(new Bundle());
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.dialog_delete_chatroom, container, false);
+
+        assignView(view);
+        assignLink();
+
+        return view;
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate: started");
+
         mChatroomId = getArguments().getString(getString(R.string.field_chatroom_id));
         if (mChatroomId != null) {
             Log.d(TAG, "onCreate: got the chatroom id: " + mChatroomId);
         }
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.dialog_delete_chatroom, container, false);
+    private void assignView(View view) {
+        mDelete = view.findViewById(R.id.confirm_delete);
+        mCancel = view.findViewById(R.id.cancel);
+    }
 
-
-        TextView delete = view.findViewById(R.id.confirm_delete);
-        delete.setOnClickListener(new View.OnClickListener() {
+    private void assignLink() {
+        mDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mChatroomId != null) {
-                    Log.d(TAG, "onClick: deleting chatroom: " + mChatroomId);
+                deleteTheChatroom();
 
-                    DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-                    reference.child(getString(R.string.dbnode_chatrooms))
-                            .child(mChatroomId)
-                            .removeValue();
-                    ((ChatActivity) getActivity()).getChatrooms();
-                    getDialog().dismiss();
-                }
             }
         });
 
-        TextView cancel = view.findViewById(R.id.cancel);
-        cancel.setOnClickListener(new View.OnClickListener() {
+        mCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: cenceling deletion of chatroom");
+                Log.d(TAG, "onClick: canceling deletion of chatroom");
                 getDialog().dismiss();
             }
         });
 
 
-        return view;
     }
+
+    private void deleteTheChatroom() {
+        if (mChatroomId != null) {
+            Log.d(TAG, "onClick: deleting chatroom: " + mChatroomId);
+
+            DatabaseReference reference = mData.getReference();
+            reference.child(getString(R.string.dbnode_chatrooms))
+                    .child(mChatroomId)
+                    .removeValue();
+            ((ChatActivity) getActivity()).getChatrooms();
+            getDialog().dismiss();
+        }
+    }
+
 
 }
 

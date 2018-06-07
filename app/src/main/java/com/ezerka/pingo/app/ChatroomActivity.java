@@ -1,5 +1,6 @@
 package com.ezerka.pingo.app;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -44,6 +45,8 @@ public class ChatroomActivity extends AppCompatActivity {
     //firebase
     private FirebaseAuth.AuthStateListener mAuthListener;
     private DatabaseReference mMessagesReference;
+    private FirebaseDatabase mData;
+    private FirebaseAuth mAuth;
     //widgets
     private TextView mChatroomName;
     private ListView mListView;
@@ -54,40 +57,58 @@ public class ChatroomActivity extends AppCompatActivity {
     private List<ChatMessage> mMessagesList;
     private Set<String> mMessageIdSet;
     private ChatMessageListAdapter mAdapter;
-    ValueEventListener mValueEventListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            getChatroomMessages();
+    private ValueEventListener mValueEventListener;
 
-            //get the number of messages currently in the chat and update the database
-            int numMessages = (int) dataSnapshot.getChildrenCount();
-            updateNumMessages(numMessages);
-        }
+    private Context mContext;
 
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
 
-        }
-    };
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chatroom);
+
+        assignView();
+        assignLinks();
+
+
+        getSupportActionBar().hide();
+
+        setupFirebaseAuth();
+        getChatroom();
+        hideSoftKeyboard();
+    }
+
+    private void assignView() {
         mChatroomName = findViewById(R.id.text_chatroom_name);
         mListView = findViewById(R.id.listView);
         mMessage = findViewById(R.id.input_message);
         mCheckmark = findViewById(R.id.checkmark);
-        getSupportActionBar().hide();
-        Log.d(TAG, "onCreate: started.");
 
-        setupFirebaseAuth();
-        getChatroom();
-        init();
-        hideSoftKeyboard();
+        mData = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+
+        mContext = getApplicationContext();
+
+        mValueEventListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                getChatroomMessages();
+
+                //get the number of messages currently in the chat and update the database
+                int numMessages = (int) dataSnapshot.getChildrenCount();
+                updateNumMessages(numMessages);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
     }
 
-    private void init() {
+    private void assignLinks() {
 
         mMessage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,39 +120,44 @@ public class ChatroomActivity extends AppCompatActivity {
         mCheckmark.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                if (!mMessage.getText().toString().equals("")) {
-                    String message = mMessage.getText().toString();
-                    Log.d(TAG, "onClick: sending new message: " + message);
-
-                    //create the new message object for inserting
-                    ChatMessage newMessage = new ChatMessage();
-                    newMessage.setMessage(message);
-                    newMessage.setTimestamp(getTimestamp());
-                    newMessage.setUser_id(FirebaseAuth.getInstance().getCurrentUser().getUid());
-
-                    //get a database reference
-                    DatabaseReference reference = FirebaseDatabase.getInstance().getReference()
-                            .child(getString(R.string.dbnode_chatrooms))
-                            .child(mChatroom.getChatroom_id())
-                            .child(getString(R.string.field_chatroom_messages));
-
-                    //create the new messages id
-                    String newMessageId = reference.push().getKey();
-
-                    //insert the new message into the chatroom
-                    reference
-                            .child(newMessageId)
-                            .setValue(newMessage);
-
-                    //clear the EditText
-                    mMessage.setText("");
-
-                    //refresh the messages list? Or is it done by the listener??
-                }
-
+                sendTheMessage();
             }
         });
+
+    }
+
+    private void sendTheMessage() {
+        String sMessage = mMessage.getText().toString();
+
+        if (!sMessage.equals("")) {
+            Log.d(TAG, "onClick: sending new message: " + sMessage);
+
+            //create the new message object for inserting
+            ChatMessage newMessage = new ChatMessage();
+            newMessage.setMessage(sMessage);
+            newMessage.setTimestamp(getTimestamp());
+            newMessage.setUser_id(mAuth.getCurrentUser().getUid());
+
+            //get a database reference
+            DatabaseReference reference = mData.getReference()
+                    .child(getString(R.string.dbnode_chatrooms))
+                    .child(mChatroom.getChatroom_id())
+                    .child(getString(R.string.field_chatroom_messages));
+
+            //create the new messages id
+            String newMessageId = reference.push().getKey();
+
+            //insert the new message into the chatroom
+            assert newMessageId != null;
+            reference
+                    .child(newMessageId)
+                    .setValue(newMessage);
+
+            //clear the EditText
+            mMessage.setText("");
+
+            //refresh the messages list? Or is it done by the listener??
+        }
     }
 
     /**
@@ -158,7 +184,7 @@ public class ChatroomActivity extends AppCompatActivity {
             mMessageIdSet = new HashSet<>();
             initMessagesList();
         }
-        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        final DatabaseReference reference = mData.getReference();
         Query query = reference.child(getString(R.string.dbnode_chatrooms))
                 .child(mChatroom.getChatroom_id())
                 .child(getString(R.string.field_chatroom_messages));
@@ -209,13 +235,13 @@ public class ChatroomActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.d(TAG, databaseError.getDetails());
             }
         });
     }
 
     private void getUserDetails() {
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
         for (int i = 0; i < mMessagesList.size(); i++) {
             // Log.d(TAG, "onDataChange: searching for userId: " + mMessagesList.get(i).getUser_id());
             final int j = i;
@@ -234,7 +260,7 @@ public class ChatroomActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        Log.d(TAG, databaseError.getDetails());
                     }
                 });
             }
@@ -243,17 +269,11 @@ public class ChatroomActivity extends AppCompatActivity {
     }
 
     private void initMessagesList() {
-        mAdapter = new ChatMessageListAdapter(ChatroomActivity.this,
-                R.layout.layout_chatmessage_listitem, mMessagesList);
+        mAdapter = new ChatMessageListAdapter(mContext, R.layout.layout_chatmessage_listitem, mMessagesList);
         mListView.setAdapter(mAdapter);
         mListView.setSelection(mAdapter.getCount() - 1); //scroll to the bottom of the list
     }
 
-    /**
-     * Return the current timestamp in the form of a string
-     *
-     * @return
-     */
     private String getTimestamp() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("Canada/Pacific"));
@@ -264,25 +284,17 @@ public class ChatroomActivity extends AppCompatActivity {
             ----------------------------- Firebase setup ---------------------------------
     */
 
-    private void hideSoftKeyboard() {
-        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkAuthenticationState();
-    }
 
     private void checkAuthenticationState() {
         Log.d(TAG, "checkAuthenticationState: checking authentication state.");
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
             Log.d(TAG, "checkAuthenticationState: user is null, navigating back to login screen.");
 
-            Intent intent = new Intent(ChatroomActivity.this, LoginActivity.class);
+            Intent intent = new Intent(mContext, LoginActivity.class);
+            makeToast("Please Login");
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
@@ -306,8 +318,8 @@ public class ChatroomActivity extends AppCompatActivity {
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
-                    Toast.makeText(ChatroomActivity.this, "Signed out", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(ChatroomActivity.this, LoginActivity.class);
+                    makeToast("Signed Out");
+                    Intent intent = new Intent(mContext, LoginActivity.class);
                     startActivity(intent);
                     finish();
                 }
@@ -321,13 +333,13 @@ public class ChatroomActivity extends AppCompatActivity {
      * upadte the total number of message the user has seen
      */
     private void updateNumMessages(int numMessages) {
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         reference
                 .child(getString(R.string.dbnode_chatrooms))
                 .child(mChatroom.getChatroom_id())
                 .child(getString(R.string.field_users))
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                .child(mAuth.getCurrentUser().getUid())
                 .child(getString(R.string.field_last_message_seen))
                 .setValue(String.valueOf(numMessages));
     }
@@ -342,7 +354,7 @@ public class ChatroomActivity extends AppCompatActivity {
          /*
             ---------- Listener that will watch the 'chatroom_messages' node ----------
          */
-        mMessagesReference = FirebaseDatabase.getInstance().getReference().child(getString(R.string.dbnode_chatrooms))
+        mMessagesReference = mData.getReference().child(getString(R.string.dbnode_chatrooms))
                 .child(mChatroom.getChatroom_id())
                 .child(getString(R.string.field_chatroom_messages));
 
@@ -350,9 +362,15 @@ public class ChatroomActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        checkAuthenticationState();
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
-        FirebaseAuth.getInstance().addAuthStateListener(mAuthListener);
+        mAuth.addAuthStateListener(mAuthListener);
         isActivityRunning = true;
     }
 
@@ -360,9 +378,17 @@ public class ChatroomActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
         if (mAuthListener != null) {
-            FirebaseAuth.getInstance().removeAuthStateListener(mAuthListener);
+            mAuth.removeAuthStateListener(mAuthListener);
         }
         isActivityRunning = false;
+    }
+
+    private void hideSoftKeyboard() {
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    private void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 }
 

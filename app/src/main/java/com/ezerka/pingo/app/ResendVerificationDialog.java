@@ -30,76 +30,84 @@ public class ResendVerificationDialog extends DialogFragment {
 
     //widgets
     private EditText mConfirmPassword, mConfirmEmail;
-
+    private TextView confirmDialog;
+    private TextView cancelDialog;
     //vars
     private Context mContext;
 
+    private FirebaseAuth mAuth;
+
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_resend_verification, container, false);
+        assignViews(view);
+        assignLinks();
+
+        return view;
+    }
+
+    private void assignViews(View view) {
         mConfirmPassword = view.findViewById(R.id.confirm_password);
         mConfirmEmail = view.findViewById(R.id.confirm_email);
+
+        confirmDialog = view.findViewById(R.id.dialogConfirm);
+        cancelDialog = view.findViewById(R.id.dialogCancel);
+
         mContext = getActivity();
 
+        mAuth = FirebaseAuth.getInstance();
+    }
 
-        TextView confirmDialog = view.findViewById(R.id.dialogConfirm);
+    private void assignLinks() {
         confirmDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "onClick: attempting to resend verification email.");
-
-                if (!isEmpty(mConfirmEmail.getText().toString())
-                        && !isEmpty(mConfirmPassword.getText().toString())) {
-
-                    //temporarily authenticate and resend verification email
-                    authenticateAndResendEmail(mConfirmEmail.getText().toString(),
-                            mConfirmPassword.getText().toString());
-                } else {
-                    Toast.makeText(mContext, "all fields must be filled out", Toast.LENGTH_SHORT).show();
-                }
-
-
+                reSendTheVerificationEmail();
             }
         });
 
-        // Cancel button for closing the dialog
-        TextView cancelDialog = view.findViewById(R.id.dialogCancel);
         cancelDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 getDialog().dismiss();
             }
         });
-
-        return view;
     }
 
+    private void reSendTheVerificationEmail() {
+        String sEmail = mConfirmEmail.getText().toString();
+        String sPass = mConfirmPassword.getText().toString();
 
-    /**
-     * reauthenticate so we can send a verification email again
-     *
-     * @param email
-     * @param password
-     */
+        Log.d(TAG, "onClick: attempting to resend verification email.");
+
+        if (isEmpty(sEmail) && isEmpty(sPass)) {
+
+            //temporarily authenticate and resend verification email
+            authenticateAndResendEmail(sEmail, sPass);
+        } else {
+            makeToast("All fields must be filled");
+        }
+    }
+
     private void authenticateAndResendEmail(String email, String password) {
         AuthCredential credential = EmailAuthProvider
                 .getCredential(email, password);
-        FirebaseAuth.getInstance().signInWithCredential(credential)
+        mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: reauthenticate success.");
                             sendVerificationEmail();
-                            FirebaseAuth.getInstance().signOut();
+                            mAuth.signOut();
                             getDialog().dismiss();
                         }
                     }
                 }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(mContext, "Invalid Credentials. \nReset your password and try again", Toast.LENGTH_SHORT).show();
+                makeToast("Invalid Credentials");
                 getDialog().dismiss();
             }
         });
@@ -109,7 +117,7 @@ public class ResendVerificationDialog extends DialogFragment {
      * sends an email verification link to the user
      */
     public void sendVerificationEmail() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
             user.sendEmailVerification()
@@ -117,9 +125,9 @@ public class ResendVerificationDialog extends DialogFragment {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(mContext, "Sent Verification Email", Toast.LENGTH_SHORT).show();
+                                makeToast("Verification Email Sent");
                             } else {
-                                Toast.makeText(mContext, "couldn't send email", Toast.LENGTH_SHORT).show();
+                                makeToast("Couldn't send the email");
                             }
                         }
                     });
@@ -127,17 +135,13 @@ public class ResendVerificationDialog extends DialogFragment {
 
     }
 
-    /**
-     * Return true if the @param is null
-     *
-     * @param string
-     * @return
-     */
     private boolean isEmpty(String string) {
-        return string.equals("");
+        return !string.equals("");
     }
 
-
+    private void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
+    }
 }
 
 

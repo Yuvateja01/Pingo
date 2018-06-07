@@ -58,10 +58,10 @@ public class EmployeesAdapter extends RecyclerView.Adapter<EmployeesAdapter.View
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        public ImageView profileImage;
-        public TextView name, department;
+        private ImageView profileImage;
+        private TextView name, department;
 
-        public ViewHolder(View itemView) {
+        private ViewHolder(View itemView) {
             super(itemView);
             profileImage = itemView.findViewById(R.id.profile_image);
             name = itemView.findViewById(R.id.name);

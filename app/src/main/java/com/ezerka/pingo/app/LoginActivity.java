@@ -2,10 +2,10 @@ package com.ezerka.pingo.app;
 
 
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -36,74 +36,69 @@ public class LoginActivity extends AppCompatActivity {
     private static final int ERROR_DIALOG_REQUEST = 9001;
     public static boolean isActivityRunning;
     //Firebase
-    private FirebaseAuth.AuthStateListener mAuthListener;
     // widgets
+    private TextView mRegister;
+    private TextView mResetPassword;
+    private TextView mReSendVerificationEmail;
     private EditText mEmail, mPassword;
     private ProgressBar mProgressBar;
+    private Button signIn;
+
+
+    private Context mContext;
+
+    private FirebaseAuth mAuth;
+    private FirebaseAuth.AuthStateListener mAuthListener;
+
+    private GoogleApiAvailability mGoogleApi;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        mEmail = findViewById(R.id.email);
-        mPassword = findViewById(R.id.password);
-        mProgressBar = findViewById(R.id.progressBar);
 
+        assignViews();
+        assignLinks();
+        hideSoftKeyboard();
         setupFirebaseAuth();
         initImageLoader();
-        if (servicesOK()) {
-            init();
-        }
-        hideSoftKeyboard();
 
     }
 
-    private void init() {
-        Button signIn = findViewById(R.id.email_sign_in_button);
+    private void assignViews() {
+        mRegister = findViewById(R.id.link_register);
+        mResetPassword = findViewById(R.id.forgot_password);
+        mReSendVerificationEmail = findViewById(R.id.resend_verification_email);
+
+        mEmail = findViewById(R.id.email);
+        mPassword = findViewById(R.id.password);
+        mProgressBar = findViewById(R.id.progressBar);
+        signIn = findViewById(R.id.email_sign_in_button);
+
+        mContext = getApplicationContext();
+
+        mAuth = FirebaseAuth.getInstance();
+
+        mGoogleApi = GoogleApiAvailability.getInstance();
+    }
+
+    private void assignLinks() {
         signIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                //check if the fields are filled out
-                if (!isEmpty(mEmail.getText().toString())
-                        && !isEmpty(mPassword.getText().toString())) {
-                    Log.d(TAG, "onClick: attempting to authenticate.");
-
-                    showDialog();
-
-                    FirebaseAuth.getInstance().signInWithEmailAndPassword(mEmail.getText().toString(),
-                            mPassword.getText().toString())
-                            .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                                @Override
-                                public void onComplete(@NonNull Task<AuthResult> task) {
-
-                                    hideDialog();
-
-                                }
-                            }).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(LoginActivity.this, "Authentication Failed", Toast.LENGTH_SHORT).show();
-                            hideDialog();
-                        }
-                    });
-                } else {
-                    Toast.makeText(LoginActivity.this, "You didn't fill in all the fields.", Toast.LENGTH_SHORT).show();
-                }
+                signInTheUserButton();
             }
         });
 
-        TextView register = findViewById(R.id.link_register);
-        register.setOnClickListener(new View.OnClickListener() {
+        mRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(mContext, RegisterActivity.class));
             }
         });
 
-        TextView resetPassword = findViewById(R.id.forgot_password);
-        resetPassword.setOnClickListener(new View.OnClickListener() {
+        mResetPassword.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 PasswordResetDialog dialog = new PasswordResetDialog();
@@ -111,8 +106,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        TextView resendEmailVerification = findViewById(R.id.resend_verification_email);
-        resendEmailVerification.setOnClickListener(new View.OnClickListener() {
+        mReSendVerificationEmail.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ResendVerificationDialog dialog = new ResendVerificationDialog();
@@ -121,44 +115,115 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    private void signInTheUserButton() {
+        String sEmail = mEmail.getText().toString();
+        String sPass = mPassword.getText().toString();
+
+
+        if (isEmpty(sEmail) && isEmpty(sPass)) {
+            Log.d(TAG, "onClick: Attempting To Authenticate.");
+
+            showDialog();
+
+            mAuth.signInWithEmailAndPassword(sEmail, sPass)
+                    .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+
+                            hideDialog();
+
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    makeToast("Authentication Failed");
+                    hideDialog();
+                }
+            });
+        } else {
+            makeToast("All the fields must be filled");
+        }
+    }
+
 
     public boolean servicesOK() {
         Log.d(TAG, "servicesOK: Checking Google Services.");
 
-        int isAvailable = GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(LoginActivity.this);
+        int isAvailable = mGoogleApi.isGooglePlayServicesAvailable(mContext);
 
         if (isAvailable == ConnectionResult.SUCCESS) {
             //everything is ok and the user can make mapping requests
             Log.d(TAG, "servicesOK: Play Services is OK");
             return true;
-        } else if (GoogleApiAvailability.getInstance().isUserResolvableError(isAvailable)) {
+        } else if (mGoogleApi.isUserResolvableError(isAvailable)) {
             //an error occured, but it's resolvable
             Log.d(TAG, "servicesOK: an error occured, but it's resolvable.");
-            Dialog dialog = GoogleApiAvailability.getInstance().getErrorDialog(LoginActivity.this, isAvailable, ERROR_DIALOG_REQUEST);
+            Dialog dialog = mGoogleApi.getErrorDialog(this, isAvailable, ERROR_DIALOG_REQUEST);
             dialog.show();
         } else {
-            Toast.makeText(this, "Can't connect to mapping services", Toast.LENGTH_SHORT).show();
+            makeToast("Can't Connect to the Services");
         }
 
         return false;
     }
 
+    private void setupFirebaseAuth() {
+        Log.d(TAG, "setupFirebaseAuth: started.");
+
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+
+                if (user != null) {
+
+                    //check if email is verified
+                    if (user.isEmailVerified()) {
+                        Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                        makeToast("Authenticated with: " + user.getEmail());
+
+                        Intent intent = new Intent(mContext, SignedInActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                        //check for extras from FCM
+                        if (getIntent().getExtras() != null) {
+                            Log.d(TAG, "initFCM: found intent extras: " + getIntent().getExtras().toString());
+                            for (String key : getIntent().getExtras().keySet()) {
+                                Object value = getIntent().getExtras().get(key);
+                                Log.d(TAG, "initFCM: Key: " + key + " Value: " + value);
+                            }
+                            String data = getIntent().getStringExtra("data");
+                            Log.d(TAG, "initFCM: data: " + data);
+                        }
+                        startActivity(intent);
+                        finish();
+
+                    } else {
+                        makeToast("Email is not verified");
+                        mAuth.signOut();
+                    }
+
+                } else {
+                    // User is signed out
+                    Log.d(TAG, "onAuthStateChanged:signed_out");
+                }
+
+            }
+        };
+    }
+
+
     /**
      * init universal image loader
      */
     private void initImageLoader() {
-        UniversalImageLoader imageLoader = new UniversalImageLoader(LoginActivity.this);
+        UniversalImageLoader imageLoader = new UniversalImageLoader(mContext);
         ImageLoader.getInstance().init(imageLoader.getConfig());
     }
 
-    /**
-     * Return true if the @param is null
-     *
-     * @param string
-     * @return
-     */
-    private boolean isEmpty(String string) {
-        return string.equals("");
+    private boolean isEmpty(String input) {
+        return !input.equals("");
     }
 
 
@@ -180,49 +245,12 @@ public class LoginActivity extends AppCompatActivity {
     /*
         ----------------------------- Firebase setup ---------------------------------
      */
-    private void setupFirebaseAuth() {
-        Log.d(TAG, "setupFirebaseAuth: started.");
 
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
 
-                    //check if email is verified
-                    if (user.isEmailVerified()) {
-                        Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                        Toast.makeText(LoginActivity.this, "Authenticated with: " + user.getEmail(), Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent(LoginActivity.this, SignedInActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
-                        //check for extras from FCM
-                        if (getIntent().getExtras() != null) {
-                            Log.d(TAG, "initFCM: found intent extras: " + getIntent().getExtras().toString());
-                            for (String key : getIntent().getExtras().keySet()) {
-                                Object value = getIntent().getExtras().get(key);
-                                Log.d(TAG, "initFCM: Key: " + key + " Value: " + value);
-                            }
-                            String data = getIntent().getStringExtra("data");
-                            Log.d(TAG, "initFCM: data: " + data);
-                        }
-                        startActivity(intent);
-                        finish();
-
-                    } else {
-                        Toast.makeText(LoginActivity.this, "Email is not Verified\nCheck your Inbox", Toast.LENGTH_SHORT).show();
-                        FirebaseAuth.getInstance().signOut();
-                    }
-
-                } else {
-                    // User is signed out
-                    Log.d(TAG, "onAuthStateChanged:signed_out");
-                }
-                // ...
-            }
-        };
+    private void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
+
 
     @Override
     public void onStart() {

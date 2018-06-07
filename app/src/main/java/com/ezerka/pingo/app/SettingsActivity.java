@@ -1,6 +1,7 @@
 package com.ezerka.pingo.app;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -78,8 +79,10 @@ public class SettingsActivity extends AppCompatActivity implements
     private Bitmap mSelectedImageBitmap;
     private byte[] mBytes;
     private double progress;
+    private Context mContext;
 
     // convert from bitmap to byte array
+
     public static byte[] getBytesFromBitmap(Bitmap bitmap, int quality) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, quality, stream);
@@ -93,13 +96,9 @@ public class SettingsActivity extends AppCompatActivity implements
         Log.d(TAG, "onCreate: started.");
 
         assignTheViews();
+        assignTheLinks();
+        assignTheMethods();
 
-
-        verifyStoragePermissions();
-        setupFirebaseAuth();
-        setCurrentEmail();
-        init();
-        hideSoftKeyboard();
 
     }
 
@@ -112,74 +111,23 @@ public class SettingsActivity extends AppCompatActivity implements
         mName = findViewById(R.id.input_name);
         mPhone = findViewById(R.id.input_phone);
         mProfileImage = findViewById(R.id.profile_image);
+
         mAuth = FirebaseAuth.getInstance();
+        mContext = getApplicationContext();
     }
 
-    private void init() {
+    private void assignTheLinks() {
 
-        getUserAccountData();
+        final String sEmail = mEmail.getText().toString();
+        final String sPass = mCurrentPassword.getText().toString();
 
         mSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 Log.d(TAG, "onClick: attempting to save settings.");
 
-                //see if they changed the email
-                if (!mEmail.getText().toString().equals(FirebaseAuth.getInstance().getCurrentUser().getEmail())) {
-                    //make sure email and current password fields are filled
-                    if (!isEmpty(mEmail.getText().toString())
-                            && !isEmpty(mCurrentPassword.getText().toString())) {
-
-                        //verify that user is changing to a company email address
-                        if (isValidDomain(mEmail.getText().toString())) {
-                            editUserEmail();
-                        } else {
-                            makeToast("Invalid Domain");
-                        }
-
-                    } else {
-                        makeToast("All field's must be filled");
-                    }
-
-                }
-
-
-                    /*
-                    ------ METHOD 1 for changing database data (proper way in this scenario) -----
-                     */
-                DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-                    /*
-                    ------ Change Name -----
-                     */
-                if (!mName.getText().toString().equals("")) {
-                    reference.child(getString(R.string.dbnode_users))
-                            .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                            .child(getString(R.string.field_name))
-                            .setValue(mName.getText().toString());
-                }
-
-
-                    /*
-                    ------ Change Phone Number -----
-                     */
-                if (!mPhone.getText().toString().equals("")) {
-                    reference.child(getString(R.string.dbnode_users))
-                            .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                            .child(getString(R.string.field_phone))
-                            .setValue(mPhone.getText().toString());
-                }
-
-                     /*
-                    ------ Upload the New Photo -----
-                     */
-                if (mSelectedImageUri != null) {
-                    uploadNewPhoto(mSelectedImageUri);
-                } else if (mSelectedImageBitmap != null) {
-                    uploadNewPhoto(mSelectedImageBitmap);
-                }
-
-                makeToast("Saved");
-
+                editTheUserDetails(sEmail, sPass);
             }
 
         });
@@ -188,10 +136,6 @@ public class SettingsActivity extends AppCompatActivity implements
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "onClick: sending password reset link");
-
-                    /*
-                    ------ Reset Password Link -----
-                    */
                 sendResetPasswordLink();
             }
         });
@@ -209,7 +153,14 @@ public class SettingsActivity extends AppCompatActivity implements
 
             }
         });
+    }
 
+    private void assignTheMethods() {
+        getUserAccountData();
+        setupFirebaseAuth();
+        verifyStoragePermissions();
+        setCurrentEmail();
+        hideSoftKeyboard();
     }
 
     @Override
@@ -224,11 +175,6 @@ public class SettingsActivity extends AppCompatActivity implements
 
     }
 
-    /**
-     * Uploads a new profile photo to Firebase Storage using a @param ***imageUri***
-     *
-     * @param imageUri
-     */
     public void uploadNewPhoto(Uri imageUri) {
             /*
                 upload a new profile photo to firebase storage
@@ -241,15 +187,61 @@ public class SettingsActivity extends AppCompatActivity implements
         resize.execute(imageUri);
     }
 
-    /**
-     * Uploads a new profile photo to Firebase Storage using a @param ***imageBitmap***
-     *
-     * @param imageBitmap
-     */
+    private void editTheUserDetails(String sEmail, String sPass) {
+
+        if (!sEmail.equals(mAuth.getCurrentUser().getEmail())) {
+            //make sure email and current password fields are filled
+            if (isEmpty(sEmail) && isEmpty(sPass)) {
+
+                //verify that user is changing to a company email address
+                if (isValidDomain(sEmail)) {
+                    editUserEmail();
+                } else {
+                    makeToast("Invalid Domain");
+                }
+
+            } else {
+                makeToast("All field's must be filled");
+            }
+
+        }
+
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+                    /*
+                    ------ Change Name -----
+                     */
+        if (!mName.getText().toString().equals("")) {
+            reference.child(getString(R.string.dbnode_users))
+                    .child(mAuth.getCurrentUser().getUid())
+                    .child(getString(R.string.field_name))
+                    .setValue(mName.getText().toString());
+        }
+
+
+                    /*
+                    ------ Change Phone Number -----
+                     */
+        if (!mPhone.getText().toString().equals("")) {
+            reference.child(getString(R.string.dbnode_users))
+                    .child(mAuth.getCurrentUser().getUid())
+                    .child(getString(R.string.field_phone))
+                    .setValue(mPhone.getText().toString());
+        }
+
+                     /*
+                    ------ Upload the New Photo -----
+                     */
+        if (mSelectedImageUri != null) {
+            uploadNewPhoto(mSelectedImageUri);
+        } else if (mSelectedImageBitmap != null) {
+            uploadNewPhoto(mSelectedImageBitmap);
+        }
+
+        makeToast("Saved");
+    }
+
     public void uploadNewPhoto(Bitmap imageBitmap) {
-            /*
-                upload a new profile photo to firebase storage
-             */
+
         Log.d(TAG, "uploadNewPhoto: uploading new profile photo to firebase storage.");
 
         //Only accept image sizes that are compressed to under 5MB. If thats not possible
@@ -264,7 +256,7 @@ public class SettingsActivity extends AppCompatActivity implements
         FilePaths filePaths = new FilePaths();
         //specify where the photo will be stored
         final StorageReference storageReference = FirebaseStorage.getInstance().getReference()
-                .child(filePaths.FIREBASE_IMAGE_STORAGE + "/" + FirebaseAuth.getInstance().getCurrentUser().getUid()
+                .child(filePaths.FIREBASE_IMAGE_STORAGE + "/" + mAuth.getCurrentUser().getUid()
                         + "/profile_image"); //just replace the old image with the new one
 
         if (mBytes.length / MB < MB_THRESHHOLD) {
@@ -341,7 +333,7 @@ public class SettingsActivity extends AppCompatActivity implements
              */
         Query query1 = reference.child(getString(R.string.dbnode_users))
                 .orderByKey()
-                .equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                .equalTo(mAuth.getCurrentUser().getUid());
         query1.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -359,7 +351,7 @@ public class SettingsActivity extends AppCompatActivity implements
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.d(TAG, "getUserAccountData: Method1: Error: " + databaseError.getDetails());
             }
         });
 
@@ -369,7 +361,7 @@ public class SettingsActivity extends AppCompatActivity implements
              */
         Query query2 = reference.child(getString(R.string.dbnode_users))
                 .orderByChild(getString(R.string.field_user_id))
-                .equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                .equalTo(mAuth.getCurrentUser().getUid());
         query2.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -383,11 +375,27 @@ public class SettingsActivity extends AppCompatActivity implements
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Log.d(TAG, databaseError.getDetails());
+                Log.d(TAG, "getuserAccountData: Method2: Error: " + databaseError.getDetails());
             }
         });
 
-        mEmail.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
+        mEmail.setText(mAuth.getCurrentUser().getEmail());
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        Log.d(TAG, "onRequestPermissionsResult: requestCode: " + requestCode);
+
+        switch (requestCode) {
+            case REQUEST_CODE:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "onRequestPermissionsResult: User has allowed permission to access: " + permissions[0]);
+
+                }
+                break;
+        }
+
     }
 
     /**
@@ -417,24 +425,8 @@ public class SettingsActivity extends AppCompatActivity implements
 
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-
-        Log.d(TAG, "onRequestPermissionsResult: requestCode: " + requestCode);
-
-        switch (requestCode) {
-            case REQUEST_CODE:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "onRequestPermissionsResult: User has allowed permission to access: " + permissions[0]);
-
-                }
-                break;
-        }
-
-    }
-
     private void sendResetPasswordLink() {
-        FirebaseAuth.getInstance().sendPasswordResetEmail(FirebaseAuth.getInstance().getCurrentUser().getEmail())
+        mAuth.sendPasswordResetEmail(mAuth.getCurrentUser().getEmail())
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -444,7 +436,6 @@ public class SettingsActivity extends AppCompatActivity implements
                             makeToast("Password Reset Link Sent");
                         } else {
                             Log.d(TAG, "onComplete: No user associated with that email." + task.getException());
-
                             makeToast("No user associated with the email");
                         }
                     }
@@ -459,13 +450,12 @@ public class SettingsActivity extends AppCompatActivity implements
         showDialog();
 
         AuthCredential credential = EmailAuthProvider
-                .getCredential(FirebaseAuth.getInstance().getCurrentUser().getEmail(), mCurrentPassword.getText().toString());
+                .getCredential(mAuth.getCurrentUser().getEmail(), mCurrentPassword.getText().toString());
 
-        Log.d(TAG, "editUserEmail: reauthenticating with:  \n email " + FirebaseAuth.getInstance().getCurrentUser().getEmail()
-                + " \n passowrd: " + mCurrentPassword.getText().toString());
+        Log.d(TAG, "editUserEmail: reauthenticating with:  \n email " + mAuth.getCurrentUser().getEmail() + " \n passowrd: " + mCurrentPassword.getText().toString());
 
 
-        FirebaseAuth.getInstance().getCurrentUser().reauthenticate(credential)
+        mAuth.getCurrentUser().reauthenticate(credential)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
@@ -476,15 +466,15 @@ public class SettingsActivity extends AppCompatActivity implements
                             if (isValidDomain(mEmail.getText().toString())) {
 
                                 ///////////////////now check to see if the email is not already present in the database
-                                FirebaseAuth.getInstance().fetchProvidersForEmail(mEmail.getText().toString()).addOnCompleteListener(
+                                mAuth.fetchProvidersForEmail(mEmail.getText().toString()).addOnCompleteListener(
                                         new OnCompleteListener<ProviderQueryResult>() {
                                             @Override
                                             public void onComplete(@NonNull Task<ProviderQueryResult> task) {
 
                                                 if (task.isSuccessful()) {
                                                     ///////// getProviders().size() will return size 1 if email ID is in use.
-
                                                     Log.d(TAG, "onComplete: RESULT: " + task.getResult().getProviders().size());
+
                                                     if (task.getResult().getProviders().size() == 1) {
                                                         Log.d(TAG, "onComplete: That email is already in use.");
                                                         hideDialog();
@@ -494,7 +484,7 @@ public class SettingsActivity extends AppCompatActivity implements
                                                         Log.d(TAG, "onComplete: That email is available.");
 
                                                         /////////////////////add new email
-                                                        FirebaseAuth.getInstance().getCurrentUser().updateEmail(mEmail.getText().toString())
+                                                        mAuth.getCurrentUser().updateEmail(mEmail.getText().toString())
                                                                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                                                                     @Override
                                                                     public void onComplete(@NonNull Task<Void> task) {
@@ -502,7 +492,7 @@ public class SettingsActivity extends AppCompatActivity implements
                                                                             Log.d(TAG, "onComplete: User email address updated.");
                                                                             makeToast("Updated Email");
                                                                             sendVerificationEmail();
-                                                                            FirebaseAuth.getInstance().signOut();
+                                                                            mAuth.signOut();
                                                                         } else {
                                                                             Log.d(TAG, "onComplete: Could not update email." + task.getException());
                                                                             makeToast("Unable to update the email");
@@ -556,7 +546,7 @@ public class SettingsActivity extends AppCompatActivity implements
      * sends an email verification link to the user
      */
     public void sendVerificationEmail() {
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
             user.sendEmailVerification()
@@ -579,7 +569,7 @@ public class SettingsActivity extends AppCompatActivity implements
     private void setCurrentEmail() {
         Log.d(TAG, "setCurrentEmail: setting current email to EditText field");
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
 
         if (user != null) {
             Log.d(TAG, "setCurrentEmail: user is NOT null.");
@@ -602,13 +592,13 @@ public class SettingsActivity extends AppCompatActivity implements
     private void checkAuthenticationState() {
         Log.d(TAG, "checkAuthenticationState: checking authentication state.");
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser user = mAuth.getCurrentUser();
 
         if (user == null) {
 
             Log.d(TAG, "checkAuthenticationState: user is null, navigating back to login                        screen.");
 
-            Intent loginIntent = new Intent(SettingsActivity.this, LoginActivity.class);
+            Intent loginIntent = new Intent(mContext, LoginActivity.class);
             loginIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(loginIntent);
             finish();
@@ -618,9 +608,6 @@ public class SettingsActivity extends AppCompatActivity implements
 
     }
 
-    /*
-            ----------------------------- Firebase setup ---------------------------------
-         */
     private void setupFirebaseAuth() {
         Log.d(TAG, "setupFirebaseAuth: started.");
 
@@ -632,14 +619,13 @@ public class SettingsActivity extends AppCompatActivity implements
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                     //toastMessage("Successfully signed in with: " + user.getEmail());
-                    makeToast("Signed In");
 
 
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
                     makeToast("Signed Out");
-                    Intent intent = new Intent(SettingsActivity.this, LoginActivity.class);
+                    Intent intent = new Intent(mContext, LoginActivity.class);
                     startActivity(intent);
                     finish();
                 }
@@ -672,12 +658,12 @@ public class SettingsActivity extends AppCompatActivity implements
         isActivityRunning = false;
     }
 
-    public void makeToast(String Input) {
-        Toast.makeText(SettingsActivity.this, Input, Toast.LENGTH_SHORT).show();
+    public void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 
     private boolean isEmpty(String string) {
-        return string.equals("");
+        return !string.equals("");
     }
 
     private void showDialog() {
@@ -757,5 +743,6 @@ public class SettingsActivity extends AppCompatActivity implements
             executeUploadTask();
         }
     }
+
 
 }

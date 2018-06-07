@@ -115,7 +115,7 @@
         android:layout_below="@+id/relLayout0"
         android:layout_centerHorizontal="true"
         android:contentDescription="@string/tabian_consulting_sales_chart"
-        android:src="@drawable/profit_chart" />
+        android:src="@drawable/pingo_logo" />
 
 
 </RelativeLayout>

@@ -25,65 +25,76 @@ public class PasswordResetDialog extends DialogFragment {
 
     //widgets
     private EditText mEmail;
+    private TextView confirmDialog;
 
     //vars
     private Context mContext;
+
+    private FirebaseAuth mAuth;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_resetpassword, container, false);
-        mEmail = view.findViewById(R.id.email_password_reset);
-        mContext = getActivity();
+        assignView(view);
+        assignLinks();
 
-        TextView confirmDialog = view.findViewById(R.id.dialogConfirm);
-        confirmDialog.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!isEmpty(mEmail.getText().toString())) {
-                    Log.d(TAG, "onClick: attempting to send reset link to: " + mEmail.getText().toString());
-                    sendPasswordResetEmail(mEmail.getText().toString());
-                    getDialog().dismiss();
-                }
-
-            }
-        });
 
         return view;
     }
 
-    /**
-     * Send a password reset link to the email provided
-     *
-     * @param email
-     */
+    private void assignView(View view) {
+        mEmail = view.findViewById(R.id.email_password_reset);
+        confirmDialog = view.findViewById(R.id.dialogConfirm);
+
+        mContext = getActivity();
+
+        mAuth = FirebaseAuth.getInstance();
+    }
+
+    private void assignLinks() {
+        confirmDialog.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendPasswordResetEmailButton();
+            }
+        });
+    }
+
+    private void sendPasswordResetEmailButton() {
+        String sEmail = mEmail.getText().toString();
+
+        if (isEmpty(sEmail)) {
+            Log.d(TAG, "onClick: attempting to send reset link to: " + sEmail);
+            sendPasswordResetEmail(sEmail);
+            getDialog().dismiss();
+        }
+    }
+
     public void sendPasswordResetEmail(String email) {
-        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+        mAuth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: Password Reset Email sent.");
-                            Toast.makeText(mContext, "Password Reset Link Sent to Email",
-                                    Toast.LENGTH_SHORT).show();
+                            makeToast("Password Reset Link sent to the Email");
                         } else {
                             Log.d(TAG, "onComplete: No user associated with that email.");
-                            Toast.makeText(mContext, "No User is Associated with that Email",
-                                    Toast.LENGTH_SHORT).show();
+                            makeToast("No user is associated with this Email");
 
                         }
                     }
                 });
     }
 
-    /**
-     * Return true if the @param is null
-     *
-     * @param string
-     * @return
-     */
+
     private boolean isEmpty(String string) {
-        return string.equals("");
+        return !string.equals("");
+    }
+
+    private void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 }
 

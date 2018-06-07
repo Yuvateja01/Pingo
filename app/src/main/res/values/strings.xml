@@ -22,9 +22,9 @@
     <string name="email_registration">Email Registration</string>
     <string name="email">Email</string>
     <string name="confirm_password">Confirm Password</string>
-    <string name="employee_dashboard">Employee Dashboard</string>
+    <string name="employee_dashboard"> Dashboard</string>
     <string name="this_week_s_initiatives">This week\'s initiatives</string>
-    <string name="employee_schedule">Employee Schedule</string>
+    <string name="employee_schedule"> Schedule</string>
     <string name="company_culture">Company Culture</string>
     <string name="tabian_consulting_sales_chart">Tabian Consulting Sales Chart</string>
     <string name="cancel">CANCEL</string>

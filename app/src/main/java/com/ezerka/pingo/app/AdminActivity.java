@@ -1,7 +1,9 @@
 package com.ezerka.pingo.app;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -24,6 +26,7 @@ import com.ezerka.pingo.model.fcm.FirebaseCloudMessage;
 import com.ezerka.pingo.utility.EmployeesAdapter;
 import com.ezerka.pingo.utility.FCM;
 import com.ezerka.pingo.utility.VerticalSpacingDecorator;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -34,6 +37,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import okhttp3.ResponseBody;
@@ -67,15 +71,22 @@ public class AdminActivity extends AppCompatActivity {
     private Set<String> mTokens;
     private String mServerKey;
 
+    private FirebaseDatabase mData;
+    private FirebaseAuth mAuth;
+
+    private Context mContext;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
 
-
         assignViews();
+        assignLinks();
+
+        assignMethods();
+
         setupEmployeeList();
-        init();
         hideSoftKeyboard();
 
     }
@@ -87,15 +98,21 @@ public class AdminActivity extends AppCompatActivity {
         mRecyclerView = findViewById(recyclerView);
         mMessage = findViewById(R.id.input_message);
         mTitle = findViewById(R.id.input_title);
-    }
 
-    private void init() {
         mSelectedDepartments = new HashSet<>();
         mTokens = new HashSet<>();
 
-        /*
-            --------- Dialog for selecting departments ---------
-        */
+
+        mAuth = FirebaseAuth.getInstance();
+        mData = FirebaseDatabase.getInstance();
+
+        mContext = getApplicationContext();
+
+        mUsers = new ArrayList<>();
+        mEmployeeAdapter = new EmployeesAdapter(mContext, mUsers);
+    }
+
+    private void assignLinks() {
 
         mDepartments.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -133,9 +150,7 @@ public class AdminActivity extends AppCompatActivity {
                         if (isChecked) {
                             Log.d(TAG, "onClick: adding " + mDepartmentsList.get(which) + " to the list.");
                             mSelectedDepartments.add(mDepartmentsList.get(which));
-                        }
-
-                        else {
+                        } else {
                             Log.d(TAG, "onClick: removing " + mDepartmentsList.get(which) + " from the list.");
                             mSelectedDepartments.remove(mDepartmentsList.get(which));
 
@@ -172,21 +187,22 @@ public class AdminActivity extends AppCompatActivity {
                 String message = mMessage.getText().toString();
                 String title = mTitle.getText().toString();
 
-                if (!isEmpty(message) && !isEmpty(title)) {
+                if (isEmpty(message) && isEmpty(title)) {
 
                     //send message
                     sendMessageToDepartment(title, message);
 
                     mMessage.setText("");
                     mTitle.setText("");
-                }
-
-                else {
-                   makeToast("Fill out the title and message details");
+                } else {
+                    makeToast("Fill out the title and message details");
                 }
             }
         });
 
+    }
+
+    private void assignMethods() {
         getDepartments();
         getEmployeeList();
         getServerKey();
@@ -226,13 +242,13 @@ public class AdminActivity extends AppCompatActivity {
 
             call.enqueue(new Callback<ResponseBody>() {
                 @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                public void onResponse(@NonNull Call<ResponseBody> call, @NonNull Response<ResponseBody> response) {
                     Log.d(TAG, "onResponse: Server Response: " + response.toString());
 
                 }
 
                 @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                public void onFailure(@NonNull Call<ResponseBody> call, @NonNull Throwable t) {
                     Log.e(TAG, "onFailure: Unable to send the message." + t.getMessage());
                     makeToast("Unable to send the message");
                 }
@@ -248,21 +264,21 @@ public class AdminActivity extends AppCompatActivity {
     private void getServerKey() {
         Log.d(TAG, "getServerKey: retrieving server key.");
 
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         Query query = reference.child(getString(R.string.dbnode_server))
                 .orderByValue();
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 Log.d(TAG, "onDataChange: got the server key.");
                 DataSnapshot singleSnapshot = dataSnapshot.getChildren().iterator().next();
-                mServerKey = singleSnapshot.getValue().toString();
+                mServerKey = Objects.requireNonNull(singleSnapshot.getValue()).toString();
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d(TAG, "getServerKey: Failed: " + databaseError.getDetails());
             }
         });
     }
@@ -274,7 +290,7 @@ public class AdminActivity extends AppCompatActivity {
     private void getDepartmentTokens() {
         Log.d(TAG, "getDepartmentTokens: searching for tokens.");
         mTokens.clear(); //clear current token list in case admin has change departments
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         for (String department : mSelectedDepartments) {
             Log.d(TAG, "getDepartmentTokens: department: " + department);
@@ -285,7 +301,7 @@ public class AdminActivity extends AppCompatActivity {
 
             query.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         String token = snapshot.getValue(User.class).getMessaging_token();
                         Log.d(TAG, "onDataChange: got a token for user named: "
@@ -295,8 +311,8 @@ public class AdminActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onCancelled(DatabaseError databaseError) {
-
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    Log.d(TAG, "getDepartmentTokens: Failed: " + databaseError.getDetails());
                 }
             });
         }
@@ -305,7 +321,8 @@ public class AdminActivity extends AppCompatActivity {
     public void setDepartmentDialog(final User user) {
         Log.d(TAG, "setDepartmentDialog: setting the department of: " + user.getName());
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(AdminActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+
         builder.setIcon(R.drawable.ic_departments);
         builder.setTitle("Set a Department for " + user.getName() + ":");
 
@@ -324,13 +341,12 @@ public class AdminActivity extends AppCompatActivity {
             }
         }
 
-        final ListAdapter adapter = new ArrayAdapter<String>(AdminActivity.this,
-                android.R.layout.simple_list_item_1, mDepartmentsList);
+        final ListAdapter adapter = new ArrayAdapter<String>(mContext, android.R.layout.simple_list_item_1, mDepartmentsList);
         builder.setSingleChoiceItems(adapter, index, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 makeToast("Department Saved");
-                DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+                DatabaseReference reference = mData.getReference();
                 reference.child(getString(R.string.dbnode_users))
                         .child(user.getUser_id())
                         .child(getString(R.string.field_department))
@@ -344,20 +360,15 @@ public class AdminActivity extends AppCompatActivity {
         builder.show();
     }
 
-    /**
-     * Get a list of all employees
-     *
-     * @throws NullPointerException
-     */
     private void getEmployeeList() throws NullPointerException {
         Log.d(TAG, "getEmployeeList: getting a list of all employees");
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         Query query = reference.child(getString(R.string.dbnode_users));
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     User user = snapshot.getValue(User.class);
@@ -369,8 +380,8 @@ public class AdminActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.d(TAG,databaseError.getDetails());
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.d(TAG, "getEmployeeList: Failed: " + databaseError.getDetails());
             }
         });
     }
@@ -379,9 +390,8 @@ public class AdminActivity extends AppCompatActivity {
      * Setup the list of employees
      */
     private void setupEmployeeList() {
-        mUsers = new ArrayList<>();
-        mEmployeeAdapter = new EmployeesAdapter(AdminActivity.this, mUsers);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getApplicationContext());
+
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(mContext);
         mRecyclerView.setLayoutManager(layoutManager);
         mRecyclerView.addItemDecoration(new VerticalSpacingDecorator(15));
         mRecyclerView.setAdapter(mEmployeeAdapter);
@@ -392,12 +402,12 @@ public class AdminActivity extends AppCompatActivity {
      */
     public void getDepartments() {
         mDepartmentsList = new ArrayList<>();
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
         Query query = reference.child(getString(R.string.dbnode_departments));
 
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     String department = snapshot.getValue().toString();
                     Log.d(TAG, "onDataChange: found a department: " + department);
@@ -407,13 +417,13 @@ public class AdminActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.d(TAG, "getDepartments: Failed: " + databaseError.getDetails());
             }
         });
     }
 
     private void makeToast(String input) {
-        Toast.makeText(AdminActivity.this,input,Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -432,13 +442,7 @@ public class AdminActivity extends AppCompatActivity {
         this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 
-    /**
-     * Return true if the @param is null
-     *
-     * @param string
-     * @return
-     */
     private boolean isEmpty(String string) {
-        return string.equals("");
+        return !string.equals("");
     }
 }

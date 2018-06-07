@@ -1,7 +1,9 @@
 package com.ezerka.pingo.app;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -45,23 +47,39 @@ public class ChatActivity extends AppCompatActivity {
     private ArrayList<Chatroom> mChatrooms;
     private ChatroomListAdapter mAdapter;
     private int mSecurityLevel;
-    private DatabaseReference mChatroomReference;
+
     private HashMap<String, String> mNumChatroomMessages;
 
+    private FirebaseDatabase mData;
+    private FirebaseAuth mAuth;
+
+    private Context mContext;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        mListView = findViewById(R.id.listView);
-        mFob = findViewById(R.id.fob);
 
-        init();
+        assignView();
+        assignLinks();
+
+        getUserSecurityLevel();
+
     }
 
-    public void init() {
+
+    private void assignView() {
+        mListView = findViewById(R.id.listView);
+        mFob = findViewById(R.id.fob);
         mChatrooms = new ArrayList<>();
-        getUserSecurityLevel();
+
+        mData = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+
+        mContext = getApplicationContext();
+    }
+
+    private void assignLinks() {
         mFob.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -69,33 +87,31 @@ public class ChatActivity extends AppCompatActivity {
                 dialog.show(getSupportFragmentManager(), getString(R.string.dialog_new_chatroom));
             }
         });
-
     }
 
     private void setupChatroomList() {
         Log.d(TAG, "setupChatroomList: setting up chatroom listview");
-        mAdapter = new ChatroomListAdapter(ChatActivity.this, R.layout.layout_chatroom_listitem, mChatrooms);
+        mAdapter = new ChatroomListAdapter(mContext, R.layout.layout_chatroom_listitem, mChatrooms);
         mListView.setAdapter(mAdapter);
     }
 
-    /**
-     * Join a chatroom selected by the user.
-     * This method is executed from the ChatroomListAdapter class
-     * This method checks to make sure the chatroom exists before joining.
-     *
-     * @param chatroom
-     */
+
     public void joinChatroom(final Chatroom chatroom) {
         //make sure the chatroom exists before joining
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
+
         Query query = reference.child(getString(R.string.dbnode_chatrooms)).orderByKey();
+
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+
                 for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
                     Map<String, Object> objectMap = (HashMap<String, Object>) singleSnapshot.getValue();
+
                     if (objectMap.get(getString(R.string.field_chatroom_id)).toString()
                             .equals(chatroom.getChatroom_id())) {
+
                         if (mSecurityLevel >= Integer.parseInt(chatroom.getSecurity_level())) {
                             Log.d(TAG, "onItemClick: selected chatroom: " + chatroom.getChatroom_id());
 
@@ -103,12 +119,13 @@ public class ChatActivity extends AppCompatActivity {
                             addUserToChatroom(chatroom);
 
                             //navigate to the chatoom
-                            Intent intent = new Intent(ChatActivity.this, ChatroomActivity.class);
+                            Intent intent = new Intent(mContext, ChatroomActivity.class);
                             intent.putExtra(getString(R.string.intent_chatroom), chatroom);
                             startActivity(intent);
                         } else {
-                            Toast.makeText(ChatActivity.this, "insufficient security level", Toast.LENGTH_SHORT).show();
+                            makeToast("Insufficient Security Levels");
                         }
+
                         break;
                     }
                 }
@@ -116,28 +133,20 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                databaseError.getDetails();
             }
         });
 
     }
 
-    /**
-     * add the current user to the list of users who have joined the chatroom.
-     * Users who have joined the chatroom will receive notifications on chatroom activity.
-     * They will receive notifications via a cloud functions sending a cloud message to the
-     * chatroom ID (Sending via topic FCM)
-     *
-     * @param chatroom
-     */
     private void addUserToChatroom(Chatroom chatroom) {
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         reference.child(getString(R.string.dbnode_chatrooms))
                 .child(chatroom.getChatroom_id())
                 .child(getString(R.string.field_users))
-                .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                .child(mAuth.getCurrentUser().getUid())
                 .child(getString(R.string.field_last_message_seen))
                 .setValue(mNumChatroomMessages.get(chatroom.getChatroom_id()));
 
@@ -145,13 +154,16 @@ public class ChatActivity extends AppCompatActivity {
 
     public void getChatrooms() {
         Log.d(TAG, "getChatrooms: retrieving chatrooms from firebase database.");
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
         mNumChatroomMessages = new HashMap<>();
+
         if (mAdapter != null) {
             mAdapter.clear();
             mChatrooms.clear();
         }
+
         Query query = reference.child(getString(R.string.dbnode_chatrooms)).orderByKey();
+
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -220,16 +232,17 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.d(TAG, "getChatrooms: Error: " + databaseError.getDetails());
             }
         });
     }
 
     private void getUserSecurityLevel() {
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
         Query query = reference.child(getString(R.string.dbnode_users))
                 .orderByChild(getString(R.string.field_user_id))
-                .equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                .equalTo(mAuth.getCurrentUser().getUid());
+
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -242,9 +255,28 @@ public class ChatActivity extends AppCompatActivity {
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                Log.d(TAG, "getUserSecurityLevel: Error: " + databaseError.getDetails());
             }
+
         });
+    }
+
+    private void checkAuthenticationState() {
+        Log.d(TAG, "checkAuthenticationState: checking authentication state.");
+
+        FirebaseUser user = mAuth.getCurrentUser();
+
+        if (user == null) {
+            Log.d(TAG, "checkAuthenticationState: user is null, navigating back to login screen.");
+
+            Intent intent = new Intent(mContext, LoginActivity.class);
+            makeToast("Session Timed Out Please Login");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        } else {
+            Log.d(TAG, "checkAuthenticationState: user is authenticated.");
+        }
     }
 
     public void showDeleteChatroomDialog(String chatroomId) {
@@ -275,33 +307,16 @@ public class ChatActivity extends AppCompatActivity {
         isActivityRunning = false;
     }
 
-    private void checkAuthenticationState() {
-        Log.d(TAG, "checkAuthenticationState: checking authentication state.");
-
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (user == null) {
-            Log.d(TAG, "checkAuthenticationState: user is null, navigating back to login screen.");
-
-            Intent intent = new Intent(ChatActivity.this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        } else {
-            Log.d(TAG, "checkAuthenticationState: user is authenticated.");
-        }
+    private void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 
-    /**
-     * Return the current timestamp in the form of a string
-     *
-     * @return
-     */
     private String getTimestamp() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("Canada/Pacific"));
         return sdf.format(new Date());
     }
+
 }
 
 

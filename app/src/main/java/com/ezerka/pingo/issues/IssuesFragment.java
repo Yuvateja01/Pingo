@@ -19,11 +19,6 @@ public class IssuesFragment extends Fragment {
 
     private static final String TAG = "IssuesFragment";
 
-    //widgets
-
-
-    //vars
-
 
     @Nullable
     @Override

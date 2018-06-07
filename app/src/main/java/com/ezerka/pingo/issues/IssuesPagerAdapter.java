@@ -14,7 +14,7 @@ public class IssuesPagerAdapter extends FragmentPagerAdapter {
 
     private ArrayList<Fragment> mFragments = new ArrayList<>();
 
-    public IssuesPagerAdapter(FragmentManager fm) {
+    IssuesPagerAdapter(FragmentManager fm) {
         super(fm);
     }
 

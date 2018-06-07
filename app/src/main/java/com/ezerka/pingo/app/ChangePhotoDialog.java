@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.FileProvider;
@@ -22,7 +23,7 @@ import com.ezerka.pingo.R;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.Locale;
 
 
 public class ChangePhotoDialog extends DialogFragment {
@@ -33,62 +34,88 @@ public class ChangePhotoDialog extends DialogFragment {
     OnPhotoReceivedListener mOnPhotoReceived;
     private String mCurrentPhotoPath;
 
+    private TextView selectPhoto;
+    private TextView takePhoto;
+
+    private Context mContext;
+
     @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_changephoto, container, false);
 
-        //Initialize the textview for choosing an image from memory
-        TextView selectPhoto = view.findViewById(R.id.dialogChoosePhoto);
-        selectPhoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "onClick: accessing phones memory.");
-                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                startActivityForResult(intent, PICKFILE_REQUEST_CODE);
-            }
-        });
-
-        //Initialize the textview for choosing an image from memory
-        TextView takePhoto = view.findViewById(R.id.dialogOpenCamera);
-        takePhoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "onClick: starting camera");
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//                startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
-
-                if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                    // Create the File where the photo should go
-                    File photoFile = null;
-                    try {
-                        photoFile = createImageFile();
-                    } catch (IOException ex) {
-                        // Error occurred while creating the File
-                        Log.d(TAG, "onClick: error: " + ex.getMessage());
-                    }
-                    // Continue only if the File was successfully created
-                    if (photoFile != null) {
-                        Uri photoURI = FileProvider.getUriForFile(getActivity(),
-                                "com.example.android.fileprovider",
-                                photoFile);
-                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                        startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
-                    }
-                }
-            }
-        });
-
+        assignViews(view);
+        assignLinks();
 
         return view;
     }
 
+    private void assignViews(View view) {
+        selectPhoto = view.findViewById(R.id.dialogChoosePhoto);
+        takePhoto = view.findViewById(R.id.dialogOpenCamera);
+
+        mContext = getActivity();
+    }
+
+    private void assignLinks() {
+        //Initialize the textview for choosing an image from memory
+        selectPhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectThePhoto();
+            }
+        });
+
+        //Initialize the textview for choosing an image from memory
+        takePhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takeThePhoto();
+
+
+            }
+        });
+
+    }
+
+
+    private void selectThePhoto() {
+        Log.d(TAG, "onClick: accessing phones memory.");
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, PICKFILE_REQUEST_CODE);
+    }
+
+    private void takeThePhoto() {
+        Log.d(TAG, "onClick: starting camera");
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//                startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
+
+        if (cameraIntent.resolveActivity(mContext.getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                Log.d(TAG, "onClick: error: " + ex.getMessage());
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(mContext, "com.example.android.fileprovider", photoFile);
+                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(cameraIntent, CAMERA_REQUEST_CODE);
+            }
+
+        }
+    }
+
     private File createImageFile() throws IOException {
         // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        SimpleDateFormat timeStamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File storageDir = mContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
@@ -127,8 +154,9 @@ public class ChangePhotoDialog extends DialogFragment {
 
     @Override
     public void onAttach(Context context) {
+
         try {
-            mOnPhotoReceived = (OnPhotoReceivedListener) getActivity();
+            mOnPhotoReceived = (OnPhotoReceivedListener) mContext;
         } catch (ClassCastException e) {
             Log.e(TAG, "onAttach: ClassCastException", e.getCause());
         }

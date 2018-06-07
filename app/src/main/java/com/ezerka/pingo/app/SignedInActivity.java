@@ -1,6 +1,7 @@
 package com.ezerka.pingo.app;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -38,6 +39,8 @@ public class SignedInActivity extends AppCompatActivity {
     private FirebaseAuth.AuthStateListener mAuthListener;
     private Boolean mIsAdmin = false;
     private FirebaseAuth mAuth;
+    private FirebaseDatabase mData;
+    private Context mContext;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,6 +59,9 @@ public class SignedInActivity extends AppCompatActivity {
 
     private void assignViews() {
         mAuth = FirebaseAuth.getInstance();
+        mData = FirebaseDatabase.getInstance();
+
+        mContext = getApplicationContext();
     }
 
 
@@ -76,7 +82,7 @@ public class SignedInActivity extends AppCompatActivity {
             //get the chatroom
             Chatroom chatroom = intent.getParcelableExtra(getString(R.string.intent_chatroom));
             //navigate to the chatoom
-            Intent chatroomIntent = new Intent(SignedInActivity.this, ChatroomActivity.class);
+            Intent chatroomIntent = new Intent(mContext, ChatroomActivity.class);
             chatroomIntent.putExtra(getString(R.string.intent_chatroom), chatroom);
             startActivity(chatroomIntent);
         }
@@ -84,7 +90,7 @@ public class SignedInActivity extends AppCompatActivity {
     }
 
     private void isAdmin() {
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         Query query = reference.child(getString(R.string.dbnode_users))
                 .orderByChild(getString(R.string.field_user_id))
@@ -127,7 +133,7 @@ public class SignedInActivity extends AppCompatActivity {
     private void sendRegistrationToServer(String token) {
         Log.d(TAG, "sendRegistrationToServer: sending token to server: " + token);
 
-        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference reference = mData.getReference();
 
         reference.child(getString(R.string.dbnode_users))
                 .child(mAuth.getCurrentUser().getUid())
@@ -145,7 +151,7 @@ public class SignedInActivity extends AppCompatActivity {
         if (user == null) {
             Log.d(TAG, "checkAuthenticationState: user is null, navigating back to login screen.");
 
-            Intent intent = new Intent(SignedInActivity.this, LoginActivity.class);
+            Intent intent = new Intent(mContext, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
@@ -166,7 +172,6 @@ public class SignedInActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent intent;
         switch (item.getItemId()) {
 
             case R.id.optionSignOut:
@@ -192,7 +197,7 @@ public class SignedInActivity extends AppCompatActivity {
                 return true;
 
             case R.id.optionIssues:
-                startActivity(new Intent(this, IssuesActivity.class));
+                startActivity(new Intent(mContext, IssuesActivity.class));
                 return true;
 
             default:
@@ -236,7 +241,7 @@ public class SignedInActivity extends AppCompatActivity {
 
                 else {
                     Log.d(TAG, "onAuthStateChanged:signed_out");
-                    Intent intent = new Intent(SignedInActivity.this, LoginActivity.class);
+                    Intent intent = new Intent(mContext, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
@@ -249,7 +254,7 @@ public class SignedInActivity extends AppCompatActivity {
     }
 
     public void makeToast(String input){
-        Toast.makeText(SignedInActivity.this,input,Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 
 
@@ -262,7 +267,7 @@ public class SignedInActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        FirebaseAuth.getInstance().addAuthStateListener(mAuthListener);
+        mAuth.addAuthStateListener(mAuthListener);
         isActivityRunning = true;
     }
 
@@ -270,11 +275,9 @@ public class SignedInActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
         if (mAuthListener != null) {
-            FirebaseAuth.getInstance().removeAuthStateListener(mAuthListener);
+            mAuth.removeAuthStateListener(mAuthListener);
         }
         isActivityRunning = false;
     }
-
-
 
 }

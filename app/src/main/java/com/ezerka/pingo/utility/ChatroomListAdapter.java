@@ -72,6 +72,7 @@ public class ChatroomListAdapter extends ArrayAdapter<Chatroom> {
         }
 
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+
         try {
             //set the chatroom name
             holder.name.setText(getItem(position).getChatroom_name());

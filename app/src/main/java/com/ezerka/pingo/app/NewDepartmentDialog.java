@@ -1,5 +1,6 @@
 package com.ezerka.pingo.app;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.ezerka.pingo.R;
 import com.google.firebase.database.DatabaseReference;
@@ -21,32 +23,56 @@ public class NewDepartmentDialog extends DialogFragment {
 
     //widgets
     private EditText mNewDepartment;
+    private TextView confirmDialog;
+
+    private Context mContext;
+
+    private FirebaseDatabase mData;
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.dialog_add_department, container, false);
-        mNewDepartment = view.findViewById(R.id.input_new_department);
+        assignViews(view);
+        assignLinks();
 
-        TextView confirmDialog = view.findViewById(R.id.dialogConfirm);
+        return view;
+    }
+
+    private void assignViews(View view) {
+        mNewDepartment = view.findViewById(R.id.input_new_department);
+        confirmDialog = view.findViewById(R.id.dialogConfirm);
+
+        mContext = getActivity();
+
+        mData = FirebaseDatabase.getInstance();
+
+    }
+
+    private void assignLinks() {
         confirmDialog.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!isEmpty(mNewDepartment.getText().toString())) {
-                    Log.d(TAG, "onClick: adding new department to the list.");
-                    DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-                    reference
-                            .child(getString(R.string.dbnode_departments))
-                            .child(mNewDepartment.getText().toString())
-                            .setValue(mNewDepartment.getText().toString());
-                    getDialog().dismiss();
-
-                    ((AdminActivity) getActivity()).getDepartments();
-                }
+                createNewDepartment();
             }
         });
+    }
 
-        return view;
+    private void createNewDepartment() {
+        String sDept = mNewDepartment.getText().toString();
+
+        if (isEmpty(sDept)) {
+            Log.d(TAG, "onClick: adding new department to the list.");
+            DatabaseReference reference = mData.getReference();
+            reference
+                    .child(getString(R.string.dbnode_departments))
+                    .child(mNewDepartment.getText().toString())
+                    .setValue(mNewDepartment.getText().toString());
+
+            getDialog().dismiss();
+
+            ((AdminActivity) getActivity()).getDepartments();
+        }
     }
 
     /**
@@ -56,7 +82,11 @@ public class NewDepartmentDialog extends DialogFragment {
      * @return
      */
     private boolean isEmpty(String string) {
-        return string.equals("");
+        return !string.equals("");
+    }
+
+    private void makeToast(String input) {
+        Toast.makeText(mContext, input, Toast.LENGTH_SHORT).show();
     }
 }
 
