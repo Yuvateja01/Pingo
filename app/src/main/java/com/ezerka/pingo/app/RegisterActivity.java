@@ -60,6 +60,8 @@ public class RegisterActivity extends AppCompatActivity {
         mProgressBar = findViewById(R.id.progressBar);
 
         mAuth = FirebaseAuth.getInstance();
+
+        mContext = getApplicationContext();
     }
 
     private void assignLinks() {
