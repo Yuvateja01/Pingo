@@ -13,7 +13,6 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.ezerka.pingo.R;
 import com.ezerka.pingo.app.ChatActivity;
@@ -112,7 +111,7 @@ public class ChatroomListAdapter extends ArrayAdapter<Chatroom> {
                         Log.d(TAG, "onClick: asking for permission to delete icon.");
                         ((ChatActivity) mContext).showDeleteChatroomDialog(getItem(position).getChatroom_id());
                     } else {
-                        Toast.makeText(mContext, "You didn't create this chatroom", Toast.LENGTH_SHORT).show();
+                      makeToast("You didn't create this chatroom");
                     }
 
                 }
@@ -156,6 +155,10 @@ public class ChatroomListAdapter extends ArrayAdapter<Chatroom> {
 
         return convertView;
     }
+
+  private void makeToast(String s) {
+
+  }
 
     public static class ViewHolder {
         TextView name, creatorName, numberMessages;

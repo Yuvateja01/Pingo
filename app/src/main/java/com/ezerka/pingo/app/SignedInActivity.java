@@ -109,6 +109,7 @@ public class SignedInActivity extends AppCompatActivity {
                 if (securityLevel == 10) {
                     Log.d(TAG, "onDataChange: user is an admin.");
                     mIsAdmin = true;
+                  makeToast("Youre an admin");
                 }
 
             }
