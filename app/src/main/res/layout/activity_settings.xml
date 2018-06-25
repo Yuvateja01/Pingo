@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@color/White">
+
+  <ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+      <RelativeLayout
+        android:id="@+id/relLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="20dp">
+
+        <TextView
+          android:id="@+id/textHeader"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_centerHorizontal="true"
+          android:layout_marginTop="10dp"
+          android:text="@string/account_settings"
+          android:textColor="@color/Black"
+          android:textSize="25sp" />
+
+        <ImageView
+          android:id="@+id/profile_image"
+          android:layout_width="120dp"
+          android:layout_height="120dp"
+          android:layout_below="@+id/textHeader"
+          android:layout_centerHorizontal="true"
+          android:layout_marginTop="10dp"
+          android:scaleType="centerCrop"
+          android:src="@drawable/pingo_logo" />
+
+
+        <RelativeLayout
+          android:id="@+id/relLayout2"
+          android:layout_width="match_parent"
+          android:layout_height="50dp"
+          android:layout_below="@+id/profile_image"
+          android:layout_marginTop="30dp"
+          android:background="@drawable/grey_border_bottom">
+
+          <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_name"
+            android:tint="@color/colorAccent" />
+
+          <EditText
+            android:id="@+id/input_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:background="@null"
+            android:hint="Full Name"
+            android:imeOptions="actionNext"
+            android:inputType="textPersonName"
+            android:textColor="@color/Black" />
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+          android:id="@+id/relLayout3"
+          android:layout_width="match_parent"
+          android:layout_height="50dp"
+          android:layout_below="@+id/relLayout2"
+          android:background="@drawable/grey_border_bottom">
+
+          <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_phone"
+            android:tint="@color/colorAccent" />
+
+          <EditText
+            android:id="@+id/input_phone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:background="@null"
+            android:hint="Phone Number"
+            android:imeOptions="actionNext"
+            android:inputType="phone"
+
+            android:textColor="@color/Black" />
+
+        </RelativeLayout>
+
+
+        <RelativeLayout
+          android:id="@+id/relLayout4"
+          android:layout_width="match_parent"
+          android:layout_height="50dp"
+          android:layout_below="@+id/relLayout3"
+          android:background="@drawable/grey_border_bottom">
+
+          <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_email"
+            android:tint="@color/colorAccent" />
+
+          <EditText
+            android:id="@+id/input_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:background="@null"
+            android:hint="Email"
+            android:imeOptions="actionNext"
+            android:inputType="textEmailAddress"
+            android:textColor="@color/Black" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+          android:id="@+id/relLayout5"
+          android:layout_width="match_parent"
+          android:layout_height="50dp"
+          android:layout_below="@+id/relLayout4"
+          android:background="@drawable/grey_border_bottom">
+
+          <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/ic_password"
+            android:tint="@color/colorAccent" />
+
+          <EditText
+            android:id="@+id/input_password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="40dp"
+            android:background="@null"
+            android:hint="Confirm Password"
+            android:imeOptions="actionDone"
+            android:inputType="textPassword"
+            android:textColor="@color/Black" />
+
+        </RelativeLayout>
+
+        <android.support.v7.widget.AppCompatButton
+          android:id="@+id/btn_save"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/relLayout5"
+          android:layout_marginTop="35dp"
+          android:background="@color/colorPrimary"
+          android:elevation="5dp"
+          android:text="@string/save" />
+
+
+        <TextView
+          android:id="@+id/change_password"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/btn_save"
+          android:layout_centerHorizontal="true"
+          android:layout_marginTop="20dp"
+          android:gravity="center"
+          android:text="@string/change_password"
+          android:textColor="@color/colorAccent"
+          android:textSize="16sp" />
+
+      </RelativeLayout>
+
+
+    </RelativeLayout>
+  </ScrollView>
+
+  <ProgressBar
+    android:id="@+id/progressBar"
+    android:layout_width="50dp"
+    android:layout_height="50dp"
+    android:layout_centerHorizontal="true"
+    android:layout_marginTop="120dp"
+    android:visibility="invisible" />
+
+</RelativeLayout>

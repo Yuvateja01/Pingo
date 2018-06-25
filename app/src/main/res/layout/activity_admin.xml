@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@color/lightGrey">
+
+  <android.support.v4.widget.NestedScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+      android:layout_width="match_parent"
+      android:layout_height="match_parent">
+
+      <RelativeLayout
+        android:id="@+id/relLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/White"
+        android:padding="10dp">
+
+        <TextView
+          android:id="@+id/broadcast_title"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:text="Broadcast a Message"
+          android:textColor="@color/Black"
+          android:textSize="18sp" />
+
+        <RelativeLayout
+          android:id="@+id/relLayout2"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@id/broadcast_title">
+
+          <TextView
+            android:id="@+id/broadcast_departments"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_toLeftOf="@+id/add_department"
+            android:background="@drawable/white_onclick_grey"
+            android:paddingBottom="7dp"
+            android:paddingTop="7dp"
+            android:text="select departments"
+            android:textSize="15sp" />
+
+
+          <Button
+            android:id="@+id/add_department"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/white_onclick_grey"
+            android:text="add"
+            android:textSize="10sp" />
+        </RelativeLayout>
+
+
+        <EditText
+          android:id="@+id/input_title"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/relLayout2"
+          android:layout_marginTop="15dp"
+          android:background="@drawable/grey_border"
+          android:gravity="start"
+          android:hint="Message Title..."
+          android:maxLines="4"
+          android:minLines="1"
+          android:paddingBottom="10dp"
+          android:paddingLeft="5dp"
+          android:paddingRight="5dp"
+          android:paddingTop="10dp"
+          android:textSize="14sp" />
+
+        <EditText
+          android:id="@+id/input_message"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/input_title"
+          android:layout_marginTop="15dp"
+          android:background="@drawable/grey_border"
+          android:gravity="start"
+          android:hint="Your Message..."
+          android:maxLines="15"
+          android:minLines="4"
+          android:paddingBottom="10dp"
+          android:paddingLeft="5dp"
+          android:paddingRight="5dp"
+          android:paddingTop="5dp"
+          android:textSize="14sp" />
+
+        <Button
+          android:id="@+id/btn_send_message"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignParentRight="true"
+          android:layout_below="@+id/input_message"
+          android:layout_marginTop="5dp"
+          android:background="@drawable/grey_border"
+          android:text="send" />
+
+      </RelativeLayout>
+
+
+      <RelativeLayout
+        android:id="@+id/relLayout3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/relLayout1"
+        android:layout_marginTop="15dp"
+        android:background="@color/lightGrey">
+
+        <TextView
+          android:id="@+id/employees_title"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:background="@color/White"
+          android:padding="10dp"
+          android:text="Employees"
+          android:textColor="@color/Black"
+          android:textSize="18sp" />
+
+
+        <android.support.v7.widget.RecyclerView
+          android:id="@+id/recyclerView"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/employees_title"
+          android:nestedScrollingEnabled="true"
+          android:scrollbars="vertical">
+
+        </android.support.v7.widget.RecyclerView>
+      </RelativeLayout>
+
+
+    </RelativeLayout>
+
+  </android.support.v4.widget.NestedScrollView>
+
+
+</RelativeLayout>
