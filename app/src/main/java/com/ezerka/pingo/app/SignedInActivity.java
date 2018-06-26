@@ -176,6 +176,13 @@ public class SignedInActivity extends AppCompatActivity {
         intent = new Intent(SignedInActivity.this, IssuesActivity.class);
         startActivity(intent);
         return true;
+
+
+      case R.id.maps:
+        startActivity(new Intent(this, MapsActivity.class));
+        return true;
+
+
       default:
         return super.onOptionsItemSelected(item);
     }

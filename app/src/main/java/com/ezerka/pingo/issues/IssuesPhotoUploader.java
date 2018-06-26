@@ -114,7 +114,7 @@ public class IssuesPhotoUploader {
         @Override
         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
-          Uri firebaseURL = taskSnapshot.getUploadSessionUri();//TODO: Change it storageReference.getDownloadURL
+          Task<Uri> firebaseURL = storageReference.getDownloadUrl();
           Log.d(TAG, "onSuccess: firebase download url : " + firebaseURL.toString());
 
           // insert the download url into cloud firestore

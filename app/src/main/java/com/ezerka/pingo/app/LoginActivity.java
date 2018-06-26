@@ -15,6 +15,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
 import com.ezerka.pingo.R;
 import com.ezerka.pingo.utility.UniversalImageLoader;
 import com.google.android.gms.common.ConnectionResult;
@@ -27,11 +28,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
+import io.fabric.sdk.android.Fabric;
+
 
 public class LoginActivity extends AppCompatActivity {
 
   private static final String TAG = "LoginActivity";
-  //constants
+
+  //Constant Variables
   private static final int ERROR_DIALOG_REQUEST = 9001;
   public static boolean isActivityRunning;
   //Firebase
@@ -43,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    Fabric.with(this, new Crashlytics());
     setContentView(R.layout.activity_login);
     mEmail = (EditText) findViewById(R.id.email);
     mPassword = (EditText) findViewById(R.id.password);

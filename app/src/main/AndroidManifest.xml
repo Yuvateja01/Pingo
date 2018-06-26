@@ -20,7 +20,6 @@
     android:roundIcon="@mipmap/ic_launcher_round"
     android:supportsRtl="true"
     android:theme="@style/AppTheme">
-
     <provider
       android:name="android.support.v4.content.FileProvider"
       android:authorities="com.example.android.fileprovider"
@@ -28,15 +27,15 @@
       android:grantUriPermissions="true">
       <meta-data
         android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/file_paths"></meta-data>
+        android:resource="@xml/file_paths" />
     </provider>
 
-    <service android:name="com.ezerka.pingo.utility.MyFirebaseMessagingService">
+    <service android:name=".utility.MyFirebaseMessagingService">
       <intent-filter>
         <action android:name="com.google.firebase.MESSAGING_EVENT" />
       </intent-filter>
     </service>
-    <service android:name="com.ezerka.pingo.utility.MyFirebaseInstanceIDService">
+    <service android:name=".utility.MyFirebaseInstanceIDService">
       <intent-filter>
         <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
       </intent-filter>
@@ -56,25 +55,25 @@
     <activity android:name=".app.ChatroomActivity" />
     <activity android:name=".app.AdminActivity" />
     <activity
-      android:name="com.ezerka.pingo.issues.IssuesActivity"
+      android:name=".issues.IssuesActivity"
       android:windowSoftInputMode="adjustPan" />
-    <activity android:name="com.ezerka.pingo.issues.NewProjectActivity" />
-    <activity android:name="com.ezerka.pingo.issues.NewIssueActivity" />
-    <activity android:name="com.ezerka.pingo.issues.ProjectDetailsActivity" />
-    <activity android:name="com.ezerka.pingo.issues.IssueDetailsActivity" />
+    <activity android:name=".issues.NewProjectActivity" />
+    <activity android:name=".issues.NewIssueActivity" />
+    <activity android:name=".issues.ProjectDetailsActivity" />
+    <activity android:name=".issues.IssueDetailsActivity" />
 
+    <meta-data
+      android:name="io.fabric.ApiKey"
+      android:value="7a1cc0dcfc716d45d0d1821d36a7fc28fe14144c" />
 
+    <activity
+      android:name=".app.MapsActivity"
+      android:label="@string/title_activity_maps"
+      android:theme="@style/NoActionBar" />
+
+    <meta-data
+      android:name="com.google.android.geo.API_KEY"
+      android:value="AIzaSyBoKopMyD3cet_0fuU5XPTzVNJ6-cjGEik" />
   </application>
 
-
 </manifest>
-
-
-
-
-
-
-
-
-
-
